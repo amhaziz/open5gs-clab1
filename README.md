@@ -27,12 +27,12 @@ The following steps explain in details how to run and test the setup:
 Download and enter the lab folder:
 
 <pre>
-git clone https://github.com/amhaziz/open5gs-clab1.git
+git clone https://github.com/amhaziz/open5gs-clab11.git
 </pre>
 
 <pre>
-<b>~# cd open5gs-clab/</b>
-<b>~open5gs-clab# tree -L 2</b>
+<b>~# cd open5gs-clab1/</b>
+<b>~open5gs-clab1# tree -L 2</b>
 .
 ├── configs
 │   ├── env-files
@@ -66,8 +66,8 @@ The folder consists of:
 
 The scripts require execution permission:
 <pre>
-<b>~open5gs-clab# cd scripts/</b>
-<b>~open5gs-clab/scripts# chmod o+x *</b>
+<b>~open5gs-clab1# cd scripts/</b>
+<b>~open5gs-clab1/scripts# chmod o+x *</b>
 </pre>
 
 ## 2) Create the bridges
@@ -76,13 +76,13 @@ The setup uses .
 The script "create-bridges.sh" allows the creation fo the bridges (brctl utility)
 
 <pre>
-<b>~open5gs-clab# cd scripts/</b>
-<b>~open5gs-clab/scripts# ./create_bridges.sh</b>
+<b>~open5gs-clab1# cd scripts/</b>
+<b>~open5gs-clab1/scripts# ./create_bridges.sh</b>
 </pre>
 
 - Expected results:
 <pre>
-<b>~open5gs-clab# brctl show</b>
+<b>~open5gs-clab1# brctl show</b>
 bridge name     bridge id               STP enabled     interfaces
 br-frDi         8000.000000000000       no
 br-gtpc         8000.000000000000       no
@@ -98,7 +98,7 @@ br-sbi          8000.000000000000       no
 Deploy the topology using containrelab:
 - Expected results:
 <pre>
-<b>~open5gs-clab# clab deploy -t open5gs.yml</b>
+<b>~open5gs-clab1# clab deploy -t open5gs.yml</b>
 INFO[0000] Containerlab v0.49.0 started                 
 INFO[0000] Parsing & checking topology file: open5gs.yml 
 INFO[0000] Creating docker network: Name="br-open5gs", IPv4Subnet="172.30.0.0/24", IPv6Subnet="", MTU='ל' 
@@ -139,8 +139,8 @@ INFO[0000] Creating container: "hss"
 Register the subscribers in mongo DB using the script "register_subscriber.sh" from scripts folder:
 - Expected results:
 <pre>
-<b>~open5gs-clab# cd scripts/</b>
-<b>~open5gs-clab/scripts# ./register_subscriber.sh</b>
+<b>~open5gs-clab1# cd scripts/</b>
+<b>~open5gs-clab1/scripts# ./register_subscriber.sh</b>
 MongoDB shell version v5.0.6
 connecting to: mongodb://mongo:27017/open5gs?compressors=disabled&gssapiServiceName=mongodb
 Implicit session: session { "id" : UUID("ce250663-43cc-4b31-8f9c-b1e677fa51e2") }
@@ -182,8 +182,8 @@ NOTE: If new subscribers are registered in mongo DB, their parameters should be 
 Run Open5GS Porcesses using the script "run-o5gs.sh" from scripts folder:
 
 <pre>
-<b>~open5gs-clab/scripts# ./run_open5gs.sh</b>
-<b>~open5gs-clab/scripts#</b>
+<b>~open5gs-clab1/scripts# ./run_open5gs.sh</b>
+<b>~open5gs-clab1/scripts#</b>
 </pre>
 
 Check the logs of all Open5GS Daemons (logs folder). All the process should be running without errors. 
@@ -195,8 +195,8 @@ Some warnings about NF registration may be seen but they can be ignored (they ar
 Run SRSRAN componenets ENB and UE1 by executing "run-srsran.sh" script:
 
 <pre>
-<b>~open5gs-clab/scripts# ./run_srsran.sh</b>
-<b>~open5gs-clab/scripts#</b>
+<b>~open5gs-clab1/scripts# ./run_srsran.sh</b>
+<b>~open5gs-clab1/scripts#</b>
 </pre>
 
 Check the logs of Enodeb and UE1 in logs folder. UE1 attachement process should succed as shown below:
@@ -204,7 +204,7 @@ Check the logs of Enodeb and UE1 in logs folder. UE1 attachement process should 
 - Enodeb logs: 
 
 <pre>
-<b>~open5gs-clab# cat logs/enb.log</b>
+<b>~open5gs-clab1# cat logs/enb.log</b>
 Active RF plugins: libsrsran_rf_uhd.so libsrsran_rf_zmq.so
 Inactive RF plugins: 
 ---  Software Radio Systems LTE eNodeB  ---
@@ -238,7 +238,7 @@ User 0x46 connected
 - UE1 logs:
 
 <pre>
-<b>~open5gs-clab# cat logs/ue1.log</b>
+<b>~open5gs-clab1# cat logs/ue1.log</b>
 Active RF plugins: libsrsran_rf_uhd.so libsrsran_rf_zmq.so
 Inactive RF plugins: 
 Reading configuration file ue.conf...
@@ -275,7 +275,7 @@ Test 4G connectivity from ue1.
 Note: Before testing you should change/add default route next-hop to the UPF tunnel IP: 10.45.0.1 or source the traffic from tunnel interface.
 
 <pre>
-<b>~open5gs-clab# docker exec -it open5gs-ue1 bash</b>
+<b>~open5gs-clab1# docker exec -it open5gs-ue1 bash</b>
 root@ue1:/# ip route                     
 default via 172.30.0.1 dev eth0 
 10.45.0.0/24 dev tun_srsue proto kernel scope link src 10.45.0.2 
@@ -308,15 +308,15 @@ rtt min/avg/max/mdev = 39.192/41.733/44.275/2.541 ms
 Run UERANSIM componenets GNB and UE2 by executing "run-ueransim.sh" script:
 
 <pre>
-<b>~open5gs-clab/scripts# ./run_ueransim.sh</b>
-<b>~open5gs-clab/scripts#</b>
+<b>~open5gs-clab1/scripts# ./run_ueransim.sh</b>
+<b>~open5gs-clab1/scripts#</b>
 </pre>
 
 Check the logs of GnodeB and UE2 from logs folder. UE2 attachement process should succed as shown below:
 
 - GnodeB Logs
 <pre>
-<b>~open5gs-clab# cat logs/gnb.log</b>
+<b>~open5gs-clab1# cat logs/gnb.log</b>
 UERANSIM v3.2.6
 [2024-01-09 12:12:52.613] [sctp] [info] Trying to establish SCTP connection... (172.25.60.5:38412)
 [2024-01-09 12:12:52.619] [sctp] [info] SCTP connection established (172.25.60.5:38412)
@@ -333,7 +333,7 @@ UERANSIM v3.2.6
 
 - UE2 Logs
 <pre>
-<b>~open5gs-clab# cat logs/ue2.log</b>
+<b>~open5gs-clab1# cat logs/ue2.log</b>
 UERANSIM v3.2.6
 [2024-01-09 12:12:52.646] [nas] [info] UE switches to state [MM-DEREGISTERED/PLMN-SEARCH]
 [2024-01-09 12:12:52.647] [rrc] [debug] New signal detected for cell[1], total [1] cells in coverage
@@ -371,7 +371,7 @@ UERANSIM v3.2.6
 Test 5G connectivity from ue2 as described below:
 
 <pre>
-<b>~open5gs-clab# docker exec -it open5gs-ue2 bash</b>
+<b>~open5gs-clab1# docker exec -it open5gs-ue2 bash</b>
 bash-5.1# ip route
 default via 172.30.0.1 dev eth0 
 172.25.91.0/24 dev eth1 proto kernel scope link src 172.25.91.35 
@@ -431,6 +431,6 @@ https://containerlab.dev/manual/wireshark/
 To clear log files "clear-logs.sh" script can be used:
 
 <pre>
-<b>~open5gs-clab# cd scripts/</b>
-<b>~open5gs-clab/scripts# ./clear_logs.sh</b>
+<b>~open5gs-clab1# cd scripts/</b>
+<b>~open5gs-clab1/scripts# ./clear_logs.sh</b>
 </pre>
