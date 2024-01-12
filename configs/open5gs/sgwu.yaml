@@ -1,0 +1,17 @@
+
+logger:
+    file: /opt/open5gs/var/log/open5gs/sgwu.log
+
+sgwu:
+    pfcp:
+      - dev: eth2
+    gtpu:
+      - dev: eth1
+
+sgwc:
+    pfcp:
+      - addr: 172.25.40.3
+
+parameter:
+max:
+time:

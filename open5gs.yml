@@ -1,0 +1,313 @@
+name: open5gs
+prefix: __lab-name
+
+mgmt:
+  network: br-open5gs
+  ipv4-subnet: 172.30.0.0/24
+
+topology:
+  kinds:
+    linux:
+      image: openverso/open5gs:2.6.6
+      entrypoint: /bin/bash
+      binds:
+        - ./configs/open5gs/mme.yaml:/opt/open5gs/etc/open5gs/mme.yaml
+        - ./configs/open5gs/sgwc.yaml:/opt/open5gs/etc/open5gs/sgwc.yaml
+        - ./configs/open5gs/smf.yaml:/opt/open5gs/etc/open5gs/smf.yaml
+        - ./configs/open5gs/amf.yaml:/opt/open5gs/etc/open5gs/amf.yaml
+        - ./configs/open5gs/sgwu.yaml:/opt/open5gs/etc/open5gs/sgwu.yaml
+        - ./configs/open5gs/upf.yaml:/opt/open5gs/etc/open5gs/upf.yaml
+        - ./configs/open5gs/hss.yaml:/opt/open5gs/etc/open5gs/hss.yaml
+        - ./configs/open5gs/pcrf.yaml:/opt/open5gs/etc/open5gs/pcrf.yaml
+        - ./configs/open5gs/nrf.yaml:/opt/open5gs/etc/open5gs/nrf.yaml
+        - ./configs/open5gs/scp.yaml:/opt/open5gs/etc/open5gs/scp.yaml
+        - ./configs/open5gs/ausf.yaml:/opt/open5gs/etc/open5gs/ausf.yaml
+        - ./configs/open5gs/udm.yaml:/opt/open5gs/etc/open5gs/udm.yaml
+        - ./configs/open5gs/pcf.yaml:/opt/open5gs/etc/open5gs/pcf.yaml
+        - ./configs/open5gs/nssf.yaml:/opt/open5gs/etc/open5gs/nssf.yaml
+        - ./configs/open5gs/nssf.yaml:/opt/open5gs/etc/open5gs/nssf.yaml
+        - ./configs/open5gs/bsf.yaml:/opt/open5gs/etc/open5gs/bsf.yaml
+        - ./configs/open5gs/udr.yaml:/opt/open5gs/etc/open5gs/udr.yaml
+        - ./configs/freeDiameter/:/opt/open5gs/etc/freeDiameter/
+        - ./logs/:/opt/open5gs/var/log/open5gs/
+      env-files:
+        - ./configs/env-files/open5gs-env
+
+  nodes:
+  ## Bridges for differnent interfaces to facilitate the integration with other topologies
+    br-s1ap: # 172.25.10.0/24
+      kind: bridge
+    br-gtpc: # 172.25.20.0/24
+      kind: bridge
+    br-gtpu: # 172.25.30.0/24
+      kind: bridge
+    br-pfcp: # 172.25.40.0/24
+      kind: bridge
+    br-frDi: # 172.25.50.0/24
+      kind: bridge
+    br-ngap: # 172.25.60.0/24
+      kind: bridge
+    br-sbi: # 172.25.70.0/24
+      kind: bridge
+
+    # HSS and UDR MongoDB subscriber database backend
+    mongo:
+      kind: linux
+      mgmt-ipv4: 172.30.0.100
+      image: mongo:5.0
+      publish: 
+        - tcp/27017
+      entrypoint: docker-entrypoint.sh
+      cmd: mongod
+      env:
+        MONGO_INITDB_DATABASE: open5gs
+
+    # Open5GS WebUI: interactively edit subscriber data
+    webui-1:
+      kind: linux
+      mgmt-ipv4: 172.30.0.30
+      image: openverso/open5gs-webui:2.6.6
+      entrypoint: node server/index.js 
+      env:
+        DB_URI: mongodb://mongo/open5gs
+        NODE_ENV: development
+      ports:
+        - 3000:3000
+      wait-for:
+        - mongo
+
+    # Open5gs dbctl: Edit subscribers in MongoDB via cli
+    dbctl:
+      kind: linux
+      image: openverso/open5gs-dbctl:0.9.1
+      mgmt-ipv4: 172.30.0.31
+      entrypoint: /bin/bash
+
+########################### Open5GS nodes ##################################
+
+    #MME - Mobility Management Entity
+    mme:
+      kind: linux
+      mgmt-ipv4: 172.30.0.2
+      exec:
+        - ip addr add 172.25.10.2/24 dev eth1 #MME-s1ap
+        - ip addr add 172.25.20.2/24 dev eth2 #MME-gtpc       
+        - ip addr add 172.25.50.2/24 dev eth3 #MME-frDi
+
+    #SGWC - Serving Gateway Control Plane
+    sgwc:
+      kind: linux
+      mgmt-ipv4: 172.30.0.3
+      exec:      
+        - ip addr add 172.25.20.3/24 dev eth1 #SGWC-gtpc
+        - ip addr add 172.25.40.3/24 dev eth2 #SGWC-pfcp
+
+    #PGWC/SMF - Packet Gateway Control Plane / (component contained in Open5GS SMF)
+    smf:
+      kind: linux
+      mgmt-ipv4: 172.30.0.4   
+      exec:      
+        - ip addr add 172.25.20.4/24 dev eth1 #SMF-gtpc
+        - ip addr add 172.25.30.4/24 dev eth2 #SMF-gtpu
+        - ip addr add 172.25.40.4/24 dev eth3 #SMF-pfcp
+        - ip addr add 172.25.50.4/24 dev eth4 #SMF-frDi
+        - ip addr add 172.25.70.4/24 dev eth5 #SMF-sbi 
+
+    #PGWC/SMF - Packet Gateway Control Plane / (component contained in Open5GS SMF)
+    amf:
+      kind: linux
+      mgmt-ipv4: 172.30.0.5
+      exec:      
+        - ip addr add 172.25.60.5/24 dev eth1 #AMF-ngap
+        - ip addr add 172.25.70.5/24 dev eth2 #AMF-sbi
+
+    #SGWU - Serving Gateway User Plane
+    sgwu:
+      kind: linux
+      mgmt-ipv4: 172.30.0.6
+      exec:
+        - ip addr add 172.25.30.6/24 dev eth1 #SGWU-gtpu
+        - ip addr add 172.25.40.6/24 dev eth2 #SGWU-pfcp
+
+    #PGWU/UPF - Packet Gateway User Plane / (component contained in Open5GS UPF)
+    upf:
+      kind: linux
+      mgmt-ipv4: 172.30.0.7
+      binds:
+        - ./configs/tun_create.sh:/tun_create.sh
+      exec:
+        - ip addr add 172.25.30.7/24 dev eth1 #UPF-gtpu
+        - ip addr add 172.25.40.7/24 dev eth2 #UPF-pfcp      
+        - /bin/bash /tun_create.sh
+
+    #HSS - Home Subscriber Server
+    hss:
+      kind: linux
+      mgmt-ipv4: 172.30.0.8
+      exec:
+        - ip addr add 172.25.50.8/24 dev eth1 #HSS-frDi
+
+    #PCRF - Policy and Charging Rules Function
+    pcrf:
+      kind: linux
+      mgmt-ipv4: 172.30.0.9
+      exec:
+        - ip addr add 172.25.50.9/24 dev eth1 #PCRF-frDi
+
+    # NRF - NF Repository Function
+    nrf:
+      kind: linux
+      mgmt-ipv4: 172.30.0.10
+      exec:
+        - ip addr add 172.25.70.10/24 dev eth1 #NRF-sbi
+
+    # SCP - Service Communication Proxy
+    scp:
+      kind: linux
+      mgmt-ipv4: 172.30.0.200
+      exec:
+        - ip addr add 172.25.70.200/24 dev eth1 #SCP-sbi
+
+    # AUSF - Authentication Server Function
+    ausf:
+      kind: linux
+      mgmt-ipv4: 172.30.0.11
+      exec:
+        - ip addr add 172.25.70.11/24 dev eth1 #AUSF-sbi
+
+    # UDM - Unified Data Management
+    udm:
+      kind: linux
+      mgmt-ipv4: 172.30.0.12
+      exec:
+        - ip addr add 172.25.70.12/24 dev eth1 #UDM-sbi
+
+    # PCF - Policy and Charging Function
+    pcf:
+      kind: linux
+      mgmt-ipv4: 172.30.0.13
+      exec:
+        - ip addr add 172.25.70.13/24 dev eth1 #PCF-sbi
+
+    # NSSF - Network Slice Selection Function
+    nssf:
+      kind: linux
+      mgmt-ipv4: 172.30.0.14
+      exec:
+        - ip addr add 172.25.70.14/24 dev eth1 #NSSF-sbi
+
+    # BSF - Binding Support Function
+    bsf:
+      kind: linux
+      mgmt-ipv4: 172.30.0.15
+      exec:
+        - ip addr add 172.25.70.15/24 dev eth1 #BSF-sbi
+
+    # UDR - Unified Data Repository
+    udr:
+      kind: linux
+      mgmt-ipv4: 172.30.0.20
+      exec:
+        - ip addr add 172.25.70.20/24 dev eth1 #UDR-sbi
+
+################# SRSRAN 4G ENB/UE #################
+
+    enodeb:
+      kind: linux
+      image: openverso/srsran-4g:23_11
+      mgmt-ipv4: 172.30.0.32
+      entrypoint: /bin/bash
+      exec:
+        - ip addr add 172.25.10.32/24 dev eth1 #ENB-s1c-MME
+        - ip addr add 172.25.30.32/24 dev eth2 #ENB-gtpu
+        - ip addr add 172.25.90.32/24 dev eth3 #ENB-UE
+        - bash -c "envsubst < /etc/srsran/enb.conf > enb.conf"
+        - bash -c "envsubst < /etc/srsran/rr.conf > rr.conf"
+      env-files:
+        - ./configs/env-files/srsran4g-env
+
+    ue1:
+      kind: linux
+      image: openverso/srsran-4g:23_11
+      mgmt-ipv4: 172.30.0.33
+      entrypoint: /bin/bash
+      exec:
+        - ip addr add 172.25.90.33/24 dev eth1 #ENB-UE
+        - bash -c "envsubst < /etc/srsran/ue.conf > ue.conf"
+      env-files:
+        - ./configs/env-files/srsran4g-env
+
+################# UERANSIM 5G GNB/UE #################
+
+    gnb:
+      kind: linux
+      image: openverso/ueransim:3.2.6
+      mgmt-ipv4: 172.30.0.34
+      entrypoint: /bin/bash
+      exec:
+        - ip addr add 172.25.60.34/24 dev eth1 #GNB ngap N2-AMF
+        - ip addr add 172.25.30.34/24 dev eth2 #GNB gtpu N3-UPF
+        - ip addr add 172.25.91.34/24 dev eth3 #GNB-UE
+        - bash -c "envsubst < /etc/ueransim/gnb.yaml > gnb.yaml"
+      env-files:
+        - ./configs/env-files/ueransim-env
+
+    ue2:
+      kind: linux
+      image: openverso/ueransim:3.2.6
+      mgmt-ipv4: 172.30.0.35
+      entrypoint: /bin/bash
+      exec:
+        - ip addr add 172.25.91.35/24 dev eth1 #GNB-UE
+        - bash -c "envsubst < /etc/ueransim/ue.yaml > ue.yaml"
+      env-files:
+        - ./configs/env-files/ueransim-env
+
+  links:
+    # br-s1ap links
+    - endpoints: ["br-s1ap:eth1", "mme:eth1"]
+    - endpoints: ["br-s1ap:eth2", "enodeb:eth1"]
+
+    # br-gtpc links
+    - endpoints: ["br-gtpc:eth3", "mme:eth2"]
+    - endpoints: ["br-gtpc:eth4", "sgwc:eth1"]
+    - endpoints: ["br-gtpc:eth5", "smf:eth1"]
+
+    # br-gtpu links
+    - endpoints: ["br-gtpu:eth6", "smf:eth2"]
+    - endpoints: ["br-gtpu:eth7", "sgwu:eth1"]
+    - endpoints: ["br-gtpu:eth8", "upf:eth1"]
+    - endpoints: ["br-gtpu:eth9", "enodeb:eth2"]
+    - endpoints: ["br-gtpu:eth10", "gnb:eth2"]
+
+    # br-pfcp links
+    - endpoints: ["br-pfcp:eth11", "sgwc:eth2"]
+    - endpoints: ["br-pfcp:eth12", "smf:eth3"]
+    - endpoints: ["br-pfcp:eth13", "sgwu:eth2"]
+    - endpoints: ["br-pfcp:eth14", "upf:eth2"]
+
+    # br-frDi links
+    - endpoints: ["br-frDi:eth15", "mme:eth3"]
+    - endpoints: ["br-frDi:eth16", "smf:eth4"]
+    - endpoints: ["br-frDi:eth17", "hss:eth1"]
+    - endpoints: ["br-frDi:eth18", "pcrf:eth1"]
+
+    # br-ngap links
+    - endpoints: ["br-ngap:eth19", "amf:eth1"]
+    - endpoints: ["br-ngap:eth20", "gnb:eth1"]
+
+    # br-sbi links
+    - endpoints: ["br-sbi:eth21", "smf:eth5"]
+    - endpoints: ["br-sbi:eth22", "amf:eth2"]
+    - endpoints: ["br-sbi:eth23", "nrf:eth1"]
+    - endpoints: ["br-sbi:eth24", "scp:eth1"]
+    - endpoints: ["br-sbi:eth25", "ausf:eth1"]
+    - endpoints: ["br-sbi:eth26", "udm:eth1"]
+    - endpoints: ["br-sbi:eth27", "pcf:eth1"]
+    - endpoints: ["br-sbi:eth28", "nssf:eth1"]
+    - endpoints: ["br-sbi:eth29", "bsf:eth1"]
+    - endpoints: ["br-sbi:eth30", "udr:eth1"]
+
+    # enb/gnb - UEs
+    - endpoints: ["enodeb:eth3", "ue1:eth1"]
+    - endpoints: ["gnb:eth3", "ue2:eth1"]    
