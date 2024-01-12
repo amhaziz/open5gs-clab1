@@ -1,4 +1,4 @@
-# Open5GS: 4G and 5G LAB deployment using Containerlab
+# Open5GS: 4G and 5G LAB deployment using Containerlab (Case: multiple bridges)
 
 This lab represents a 4G and a 5G Setup built using the following tools:
 
@@ -16,6 +16,9 @@ The topology built in this lab consists of creating multiple bridges for 4G/5G i
 The following diagram describes the topology and interconnection between all the components:
 
 ![topo](./img/topology.png)
+
+Note: Another Lab that uses single bridge for 4G/5G interfaces can be found here:
+https://github.com/amhaziz/open5gs-clab2
 
 The following steps explain in details how to run and test the setup:
 
