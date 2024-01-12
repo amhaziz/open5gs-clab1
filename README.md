@@ -27,7 +27,7 @@ The following steps explain in details how to run and test the setup:
 Download and enter the lab folder:
 
 <pre>
-git clone https://github.com/amhaziz/open5gs-clab11.git
+git clone https://github.com/amhaziz/open5gs-clab1.git
 </pre>
 
 <pre>
